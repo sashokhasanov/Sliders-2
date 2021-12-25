@@ -9,6 +9,7 @@ import UIKit
 
 class ColorViewController: UIViewController {
 
+    // MARK: - IBOutlets
     @IBOutlet weak var colorView: UIView!
     
     @IBOutlet weak var redValueLabel: UILabel!
@@ -23,6 +24,7 @@ class ColorViewController: UIViewController {
     @IBOutlet weak var greenTextField: UITextField!
     @IBOutlet weak var blueTextField: UITextField!
     
+    // MARK: - Class properties
     var delegate: ColorViewControllerDelagate!
     var color: UIColor! {
         didSet {
@@ -31,13 +33,13 @@ class ColorViewController: UIViewController {
         }
     }
 
+    // MARK: - Override methods
     override func viewDidLoad() {
         super.viewDidLoad()
         
         colorView.layer.cornerRadius = 20
 
         addToolbar(for: redTextField, greenTextField, blueTextField)
-
         updateViews()
     }
     
@@ -50,10 +52,18 @@ class ColorViewController: UIViewController {
         view.endEditing(true)
     }
 
+    // MARK: - IBActions
     @IBAction func sliderMoved(_ sender: UISlider) {
-        updateStoredColor(red: redSlider.value,
-                          green: greenSlider.value,
-                          blue: blueSlider.value)
+        switch sender {
+        case redSlider:
+            updateColorComponents(red: CGFloat(redSlider.value), green: nil, blue: nil)
+        case greenSlider:
+            updateColorComponents(red: nil, green: CGFloat(greenSlider.value), blue: nil)
+        case blueSlider:
+            updateColorComponents(red: nil, green: nil, blue: CGFloat(greenSlider.value))
+        default:
+            break
+        }
     }
     
     @IBAction func DoneButtonPressed() {
@@ -64,7 +74,7 @@ class ColorViewController: UIViewController {
         dismiss(animated: true)
     }
     
-    
+    // MARK: - Private methods
     private func addToolbar(for textFields: UITextField...)
     {
         let toolbar = createToolbar()
@@ -142,16 +152,13 @@ class ColorViewController: UIViewController {
         colorView.backgroundColor = color
     }
     
-    private func updateStoredColor(red: Float, green: Float, blue: Float) {
-        color = UIColor(red: CGFloat(correctValue(red)),
-                        green: CGFloat(correctValue(green)),
-                        blue: CGFloat(correctValue(blue)),
+    private func updateColorComponents(red: CGFloat?, green: CGFloat?, blue: CGFloat?) {
+        let currentColor = getRgbComponens(from: color)
+        
+        color = UIColor(red: red ?? currentColor.red,
+                        green: green ?? currentColor.green,
+                        blue: blue ?? currentColor.blue,
                         alpha: CGFloat(1.0))
-    }
-    
-    private func correctValue(_ value: Float) -> Float {
-        let boundedValue = min(max(value, 0.0), 1.0)
-        return round(boundedValue * 100) / 100
     }
     
     private func getColorText(from value: CGFloat) -> String {
@@ -159,7 +166,6 @@ class ColorViewController: UIViewController {
     }
     
     private func getRgbComponens(from color: UIColor) -> (red: CGFloat, green: CGFloat, blue: CGFloat) {
-        
         var red: CGFloat = 0.0
         var green: CGFloat = 0.0
         var blue: CGFloat = 0.0
@@ -184,9 +190,16 @@ extension ColorViewController: UITextFieldDelegate {
 
     func textFieldDidEndEditing(_ textField: UITextField) {
         
-        updateStoredColor(red: getNumberFromTextField(redTextField),
-                          green: getNumberFromTextField(greenTextField),
-                          blue: getNumberFromTextField(blueTextField))
+        switch textField {
+        case redTextField:
+            updateColorComponents(red: getNumberFromTextField(redTextField), green: nil, blue: nil)
+        case greenTextField:
+            updateColorComponents(red: nil, green: getNumberFromTextField(greenTextField), blue: nil)
+        case blueTextField:
+            updateColorComponents(red: nil, green: nil, blue: getNumberFromTextField(blueTextField))
+        default:
+            break
+        }
     }
     
     func isValidData(of textField: UITextField) -> Bool {
@@ -194,8 +207,13 @@ extension ColorViewController: UITextFieldDelegate {
         return true
     }
     
-    private func getNumberFromTextField(_ textField: UITextField) -> Float {
-        Float(textField.text ?? "") ?? 0.0
+    private func getNumberFromTextField(_ textField: UITextField) -> CGFloat {
+        CGFloat(correctValue(Float(textField.text ?? "") ?? 0.0))
+    }
+    
+    private func correctValue(_ value: Float) -> Float {
+        let boundedValue = min(max(value, 0.0), 1.0)
+        return round(boundedValue * 100) / 100
     }
     
     private func showAlert(title: String, message: String) {
