@@ -60,7 +60,7 @@ class ColorViewController: UIViewController {
         case greenSlider:
             updateColorComponents(red: nil, green: CGFloat(greenSlider.value), blue: nil)
         case blueSlider:
-            updateColorComponents(red: nil, green: nil, blue: CGFloat(greenSlider.value))
+            updateColorComponents(red: nil, green: nil, blue: CGFloat(blueSlider.value))
         default:
             break
         }
