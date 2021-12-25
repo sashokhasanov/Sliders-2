@@ -19,6 +19,11 @@ class ColorViewController: UIViewController {
     @IBOutlet weak var greenSlider: UISlider!
     @IBOutlet weak var blueSlider: UISlider!
     
+    @IBOutlet weak var redTextField: UITextField!
+    @IBOutlet weak var greenTextField: UITextField!
+    @IBOutlet weak var blueTextField: UITextField!
+    
+    
     var delegate: ColorViewControllerDelagate!
     var color: UIColor!
     
@@ -29,22 +34,28 @@ class ColorViewController: UIViewController {
         
         updateSliders(redSlider, greenSlider, blueSlider)
         updateLabels(redValueLabel, greenValueLabel, blueValueLabel)
+        updateTextFields(redTextField, greenTextField, blueTextField)
         updateColorView()
     }
 
     @IBAction func sliderMoved(_ sender: UISlider) {
+        
+        updateModel()
+        
         switch sender {
         case redSlider:
             updateLabels(redValueLabel)
+            updateTextFields(redTextField)
         case greenSlider:
             updateLabels(greenValueLabel)
+            updateTextFields(greenTextField)
         case blueSlider:
             updateLabels(blueValueLabel)
+            updateTextFields(blueTextField)
         default:
             break
         }
 
-        updateModel()
         updateColorView()
     }
     
@@ -83,6 +94,25 @@ class ColorViewController: UIViewController {
         greenSlider.value = Float(colorComponenst.green)
         blueSlider.value = Float(colorComponenst.blue)
     }
+    
+    private func updateTextFields(_ textFields: UITextField...) {
+        guard !textFields.isEmpty else { return }
+        
+        let colorComponents = getRgbComponens(from: color)
+        
+        textFields.forEach() { textField in
+            switch textField {
+            case redTextField:
+                redTextField.text = getColorText(from: colorComponents.red)
+            case greenTextField:
+                greenTextField.text = getColorText(from: colorComponents.green)
+            case blueTextField:
+                blueTextField.text = getColorText(from: colorComponents.blue)
+            default:
+                break
+            }
+        }
+    }
 
     private func updateColorView() {
         colorView.backgroundColor = color
@@ -94,6 +124,8 @@ class ColorViewController: UIViewController {
                         blue: CGFloat(blueSlider.value),
                         alpha: CGFloat(1.0))
     }
+    
+    
     
     private func getColorText(from value: CGFloat) -> String {
         String(format: "%.2f", value)
@@ -107,5 +139,28 @@ class ColorViewController: UIViewController {
         color.getRed(&red, green: &green, blue: &blue, alpha: nil)
         
         return (red, green, blue)
+    }
+}
+
+extension ColorViewController: UITextFieldDelegate {
+    
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        
+        updateModel2()
+        updateSliders(redSlider, greenSlider, blueSlider)
+        updateLabels(redValueLabel, greenValueLabel, blueValueLabel)
+        updateColorView()
+    }
+    
+    
+    private func getNumberFromTextField(_ textField: UITextField) -> Float? {
+        Float(textField.text ?? "")
+    }
+    
+    private func updateModel2() {
+        color = UIColor(red: CGFloat(getNumberFromTextField(redTextField) ?? 0),
+                        green: CGFloat(getNumberFromTextField(greenTextField) ?? 0),
+                        blue: CGFloat(getNumberFromTextField(blueTextField) ?? 0),
+                        alpha: CGFloat(1.0))
     }
 }
