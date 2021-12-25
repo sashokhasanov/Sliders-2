@@ -23,40 +23,37 @@ class ColorViewController: UIViewController {
     @IBOutlet weak var greenTextField: UITextField!
     @IBOutlet weak var blueTextField: UITextField!
     
-    
     var delegate: ColorViewControllerDelagate!
-    var color: UIColor!
-    
+    var color: UIColor! {
+        didSet {
+            guard isViewLoaded else { return }
+            updateViews()
+        }
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
         colorView.layer.cornerRadius = 20
-        
-        updateSliders(redSlider, greenSlider, blueSlider)
-        updateLabels(redValueLabel, greenValueLabel, blueValueLabel)
-        updateTextFields(redTextField, greenTextField, blueTextField)
-        updateColorView()
+
+        addToolbar(for: redTextField, greenTextField, blueTextField)
+
+        updateViews()
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
+        super.touchesBegan(touches, with: event)
+        view.endEditing(true)
     }
 
     @IBAction func sliderMoved(_ sender: UISlider) {
-        
-        updateModel()
-        
-        switch sender {
-        case redSlider:
-            updateLabels(redValueLabel)
-            updateTextFields(redTextField)
-        case greenSlider:
-            updateLabels(greenValueLabel)
-            updateTextFields(greenTextField)
-        case blueSlider:
-            updateLabels(blueValueLabel)
-            updateTextFields(blueTextField)
-        default:
-            break
-        }
-
-        updateColorView()
+        updateStoredColor(red: redSlider.value,
+                          green: greenSlider.value,
+                          blue: blueSlider.value)
     }
     
     @IBAction func DoneButtonPressed() {
@@ -67,8 +64,35 @@ class ColorViewController: UIViewController {
         dismiss(animated: true)
     }
     
+    
+    private func addToolbar(for textFields: UITextField...)
+    {
+        let toolbar = createToolbar()
+        textFields.forEach() { textField in textField.inputAccessoryView = toolbar}
+    }
+    
+    private func createToolbar() -> UIToolbar {
+        let toolbar = UIToolbar()
+        let flexibleItem = UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.flexibleSpace, target: self, action: nil)
+        let doneItem = UIBarButtonItem(title: "Done", style: .plain, target: self, action: #selector(doneTapped))
+        toolbar.items = [flexibleItem, doneItem]
+        toolbar.sizeToFit()
+        
+        return toolbar
+    }
+    
+    @objc private func doneTapped() {
+        view.endEditing(true)
+    }
+    
+    private func updateViews() {
+        updateSliders(redSlider, greenSlider, blueSlider)
+        updateLabels(redValueLabel, greenValueLabel, blueValueLabel)
+        updateTextFields(redTextField, greenTextField, blueTextField)
+        updateColorView()
+    }
+    
     private func updateLabels(_ labels: UILabel...) {
-
         guard !labels.isEmpty else { return }
         
         let colorComponents = getRgbComponens(from: color)
@@ -118,14 +142,17 @@ class ColorViewController: UIViewController {
         colorView.backgroundColor = color
     }
     
-    private func updateModel() {
-        color = UIColor(red: CGFloat(redSlider.value),
-                        green: CGFloat(greenSlider.value),
-                        blue: CGFloat(blueSlider.value),
+    private func updateStoredColor(red: Float, green: Float, blue: Float) {
+        color = UIColor(red: CGFloat(correctValue(red)),
+                        green: CGFloat(correctValue(green)),
+                        blue: CGFloat(correctValue(blue)),
                         alpha: CGFloat(1.0))
     }
     
-    
+    private func correctValue(_ value: Float) -> Float {
+        let boundedValue = min(max(value, 0.0), 1.0)
+        return round(boundedValue * 100) / 100
+    }
     
     private func getColorText(from value: CGFloat) -> String {
         String(format: "%.2f", value)
@@ -144,23 +171,37 @@ class ColorViewController: UIViewController {
 
 extension ColorViewController: UITextFieldDelegate {
     
+    func textFieldShouldEndEditing(_ textField: UITextField) -> Bool {
+        
+        let isValidData = isValidData(of: textField)
+        
+        if (!isValidData) {
+            showAlert(title: "Ooops", message: "Wrong data format")
+        }
+        
+        return isValidData
+    }
+
     func textFieldDidEndEditing(_ textField: UITextField) {
         
-        updateModel2()
-        updateSliders(redSlider, greenSlider, blueSlider)
-        updateLabels(redValueLabel, greenValueLabel, blueValueLabel)
-        updateColorView()
+        updateStoredColor(red: getNumberFromTextField(redTextField),
+                          green: getNumberFromTextField(greenTextField),
+                          blue: getNumberFromTextField(blueTextField))
     }
     
-    
-    private func getNumberFromTextField(_ textField: UITextField) -> Float? {
-        Float(textField.text ?? "")
+    func isValidData(of textField: UITextField) -> Bool {
+        guard let text = textField.text, Float(text) != nil else { return false }
+        return true
     }
     
-    private func updateModel2() {
-        color = UIColor(red: CGFloat(getNumberFromTextField(redTextField) ?? 0),
-                        green: CGFloat(getNumberFromTextField(greenTextField) ?? 0),
-                        blue: CGFloat(getNumberFromTextField(blueTextField) ?? 0),
-                        alpha: CGFloat(1.0))
+    private func getNumberFromTextField(_ textField: UITextField) -> Float {
+        Float(textField.text ?? "") ?? 0.0
+    }
+    
+    private func showAlert(title: String, message: String) {
+        let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        let alertAction = UIAlertAction(title: "OK", style: .default)
+        alertController.addAction(alertAction)
+        present(alertController, animated: true)
     }
 }
