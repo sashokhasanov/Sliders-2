@@ -202,7 +202,7 @@ extension ColorViewController: UITextFieldDelegate {
         }
     }
     
-    func isValidData(of textField: UITextField) -> Bool {
+    private func isValidData(of textField: UITextField) -> Bool {
         guard let text = textField.text, Float(text) != nil else { return false }
         return true
     }
