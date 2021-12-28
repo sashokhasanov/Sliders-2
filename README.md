@@ -1,4 +1,5 @@
 # Sliders-2
+swiftbook module 2 task 6
 
 Необходимо доработать приложение Sliders.
 
